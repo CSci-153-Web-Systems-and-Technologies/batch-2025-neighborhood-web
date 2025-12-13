@@ -35,9 +35,6 @@ export default function TopRatedSection() {
     <section className="mb-8">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-[#212529]">Top-rated Stores</h2>
-        <button className="text-[#88A2FF] hover:text-blue-800 font-medium text-sm">
-          See all →
-        </button>
       </div>
       
       {shops.length === 0 ? (
