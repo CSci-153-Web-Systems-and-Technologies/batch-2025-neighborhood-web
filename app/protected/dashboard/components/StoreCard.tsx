@@ -5,13 +5,13 @@ interface StoreCardProps {
   rating: number
   address: string
   image?: string
-  onClick?: () => void; // 1. Add optional onClick prop
+  onClick?: () => void;
 }
 
 export default function StoreCard({ name, rating, address, image, onClick }: StoreCardProps) {
   return (
     <div 
-      onClick={onClick} // 2. Attach the click handler here
+      onClick={onClick}
       className="group cursor-pointer"
     >
       {/* Image Container */}
@@ -34,7 +34,7 @@ export default function StoreCard({ name, rating, address, image, onClick }: Sto
         <div className="flex items-center gap-2 text-sm text-gray-600">
            <div className="flex items-center text-gray-900 font-bold">
              <span className="text-yellow-400 mr-1">★</span>
-             {rating}
+             {typeof rating === 'number' ? rating.toFixed(2) : "0.00"}
            </div>
            <span className="text-gray-300">|</span>
            <p className="truncate text-gray-500">{address}</p>

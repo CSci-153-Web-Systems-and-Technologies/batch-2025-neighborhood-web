@@ -29,7 +29,6 @@ export default function ShopProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // --- NEW: REVIEW FORM STATES ---
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
   const [reviewImage, setReviewImage] = useState<File | null>(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -86,8 +85,6 @@ export default function ShopProfilePage() {
     fetchShopData();
   }, [shopId]);
 
-  // --- HANDLERS ---
-
   const handleToggleFavorite = async () => {
     if (!currentUserId || !shopId) return alert("Please log in.");
     if (isFavorite) {
@@ -99,7 +96,6 @@ export default function ShopProfilePage() {
     }
   };
 
-  // --- NEW: POST REVIEW HANDLER ---
   const handlePostReview = async () => {
     if (!currentUserId || !shopId) return alert("Please log in to review.");
     if (newReview.rating === 0) return alert("Please select a star rating.");
@@ -112,7 +108,6 @@ export default function ShopProfilePage() {
 
       // 1. Upload Image (if selected)
       if (reviewImage) {
-        // Uploading to 'neighborhood-images' bucket in 'reviews' folder
         imageUrl = await uploadImage(reviewImage, 'neighborhood-images', 'reviews');
         if (!imageUrl) throw new Error("Image upload failed");
       }
@@ -127,15 +122,25 @@ export default function ShopProfilePage() {
           comment: newReview.comment,
           image_url: imageUrl
         })
-        .select('*, profiles(full_name, avatar_url)') // Join to get user details immediately
+        .select('*, profiles(full_name, avatar_url)') 
         .single();
 
       if (error) throw error;
 
+      // --- REMOVED: The manual calculation logic. The Database Trigger handles it now! ---
+
       // 3. Update UI (Add new review to top of list)
       setReviews([insertedReview, ...reviews]);
       
-      // 4. Reset Form
+      // 4. Optimistically update the star display for the user immediately
+      // (Optional: You can calculate it locally just for display, or assume the fetch on refresh will get it)
+      setShop((prev: any) => ({ 
+         ...prev, 
+         // Simple recalculation for immediate feedback without refreshing
+         rating: ((prev.rating * reviews.length) + newReview.rating) / (reviews.length + 1)
+      }));
+
+      // 5. Reset Form
       setNewReview({ rating: 0, comment: "" });
       setReviewImage(null);
       alert("Review posted successfully!");
@@ -164,6 +169,13 @@ export default function ShopProfilePage() {
                {shop.image_url ? <img src={shop.image_url} className="w-full h-full object-cover"/> : <ShoppingBag className="h-8 w-8 text-gray-400 opacity-50"/>}
             </div>
             <h2 className="text-xl font-bold font-bodoni text-[#212529] mb-1">{shop.name}</h2>
+            
+            {/* ADDED: Display Numeric Rating */}
+            <div className="flex items-center gap-1 mb-2 bg-yellow-50 px-3 py-1 rounded-full">
+                <span className="text-lg font-bold text-[#212529]">{shop.rating ? shop.rating.toFixed(1) : "0.0"}</span>
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            </div>
+
             <p className="text-sm text-gray-500 italic mb-6">{shop.description || "No description"}</p>
             <div className="w-full space-y-3 text-sm text-gray-600 mb-8 text-left">
               <div className="flex items-start gap-3"><MapPin className="h-4 w-4 text-[#88A2FF]" /><span>{shop.address}</span></div>
