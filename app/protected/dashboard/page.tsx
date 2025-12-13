@@ -10,8 +10,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // CHANGE HERE:
-  // If no town is selected, it defaults to "Leyte" instead of "Town Name"
   const townName = searchParams.get("town") || "Leyte";
   
   return (
@@ -31,7 +29,7 @@ export default function DashboardPage() {
       </div>
 
       <button 
-        onClick={() => router.push("/protected/dashboard/Map")}
+        onClick={() => router.push("/protected/dashboard/map")}
         className="fixed bottom-8 right-8 bg-[#212529] text-white p-4 rounded-full shadow-lg hover:bg-gray-800 transition-all hover:scale-105 group z-50"
       >
         <MapPin className="h-6 w-6" />

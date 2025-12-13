@@ -108,11 +108,11 @@ export default function DashboardHeader() {
           )}
         </div>
 
-        <button onClick={() => router.push("/protected/dashboard/Map")} className="font-medium hover:text-[#88A2FF]">
+        <button onClick={() => router.push("/protected/dashboard/map")} className="font-medium hover:text-[#88A2FF]">
           Map
         </button>
 
-        <div onClick={() => router.push("/protected/dashboard/Profile")} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+        <div onClick={() => router.push("/protected/dashboard/profile")} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
           {/* 3. Updated Avatar Circle */}
           <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300 text-sm font-bold text-gray-600">
              {/* Show the first letter of the name (e.g., "J") */}

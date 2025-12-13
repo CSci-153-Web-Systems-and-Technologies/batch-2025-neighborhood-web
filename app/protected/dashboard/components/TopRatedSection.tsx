@@ -14,12 +14,11 @@ export default function TopRatedSection() {
 
   useEffect(() => {
     const fetchShops = async () => {
-      // Fetch shops that are 'approved' (we assume existing shops in DB are approved for now)
-      // You can add .eq('status', 'approved') if you have that column in a 'shops' or 'applications' join
       const { data, error } = await supabase
         .from('shops')
         .select('*')
-        .limit(6); // Just show top 6 for now
+        .order('rating', { ascending: false }) // Sort by rating
+        .limit(6);
 
       if (!error && data) {
         setShops(data);
@@ -49,11 +48,10 @@ export default function TopRatedSection() {
             <StoreCard 
               key={store.id} 
               name={store.name}
-              rating={store.rating || 0} // Default to 0 if null
+              rating={store.rating || 0}
               address={store.address}
               image={store.cover_image} 
-              // PASS THE ID IN THE URL
-              onClick={() => router.push(`/protected/dashboard/Shop?id=${store.id}`)}
+              onClick={() => router.push(`/protected/dashboard/shop?id=${store.id}`)}
             />
           ))}
         </div>
