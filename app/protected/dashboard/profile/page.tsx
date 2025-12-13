@@ -100,8 +100,11 @@ export default function ProfilePage() {
   // --- 2. HANDLERS ---
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/auth/login");
+    // 1. Confirm before logging out
+    if (confirm("Are you sure you want to log out?")) {
+      await supabase.auth.signOut();
+      router.push("/auth/login");
+    }
   };
 
   const handleEditClick = () => {

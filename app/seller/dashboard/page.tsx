@@ -152,8 +152,11 @@ export default function SellerDashboard() {
   }, [router, supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/auth/seller-login");
+    // 1. Add confirmation check
+    if (confirm("Are you sure you want to log out?")) {
+      await supabase.auth.signOut();
+      router.push("/auth/seller-login");
+    }
   };
 
   // --- PRODUCT HANDLERS ---

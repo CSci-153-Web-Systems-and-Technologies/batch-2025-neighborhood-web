@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, ChevronDown, User, MapPin } from "lucide-react";
+import { Search, ChevronDown, User, MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-// 1. Import the hook to access shared user data
-import { useUser } from "@/app/context/UserContext";
+// 1. Import Supabase Client
+import { createClient } from "@/lib/client";
 
 const leyteTowns = [
   "Tacloban City", "Ormoc City", "Baybay City", "Abuyog", "Alangalang", "Albuera",
@@ -23,12 +23,40 @@ export default function DashboardHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const supabase = createClient();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // 2. Get the dynamic user data
-  const { user } = useUser();
+  // 2. Local state for Profile Data
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const selectedTown = searchParams.get("town") || "Town";
+
+  // 3. Fetch Profile Data (Avatar & Name)
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          if (data) setProfile(data);
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleSelectTown = (town: string) => {
     setIsDropdownOpen(false);
@@ -113,14 +141,29 @@ export default function DashboardHeader() {
         </button>
 
         <div onClick={() => router.push("/protected/dashboard/profile")} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-          {/* 3. Updated Avatar Circle */}
-          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300 text-sm font-bold text-gray-600">
-             {/* Show the first letter of the name (e.g., "J") */}
-             {user.name.charAt(0).toUpperCase()}
+          
+          {/* 4. UPDATED AVATAR CIRCLE */}
+          <div className="relative w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300 overflow-hidden">
+             {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+             ) : profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover" 
+                />
+             ) : (
+                <span className="text-sm font-bold text-gray-600">
+                  {/* Fallback to Initials */}
+                  {(profile?.full_name?.[0] || "U").toUpperCase()}
+                </span>
+             )}
           </div>
           
-          {/* 4. Updated Name Display */}
-          <span className="font-semibold text-sm hidden sm:block">{user.name}</span>
+          {/* 5. UPDATED NAME DISPLAY */}
+          <span className="font-semibold text-sm hidden sm:block">
+            {profile?.full_name || "User"}
+          </span>
         </div>
       </div>
     </header>
