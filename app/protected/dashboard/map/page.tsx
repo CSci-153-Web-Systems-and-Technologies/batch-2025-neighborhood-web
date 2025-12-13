@@ -1,38 +1,37 @@
 "use client";
 
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import dynamic from "next/dynamic"; // 1. Import dynamic
+
+
+const LeafletMap = dynamic(
+  () => import("./LeafletMap"),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+        <Loader2 className="animate-spin h-8 w-8" />
+        <span className="ml-2">Loading Map...</span>
+      </div>
+    )
+  }
+);
 
 export default function MapPage() {
   const router = useRouter();
 
-
-  const Map = useMemo(() => dynamic(
-    () => import('@/app/protected/dashboard/map/LeafletMap'),
-    { 
-      loading: () => <p className="text-[#88A2FF] font-medium animate-pulse">Loading Map...</p>,
-      ssr: false 
-    }
-  ), []);
-
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      {/* Back Button */}
+    <div className="space-y-4 h-[calc(100vh-120px)]">
       <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 hover:text-[#212529] transition-colors w-fit"
+        onClick={() => router.back()} 
+        className="flex items-center gap-2 text-gray-600 font-medium hover:text-[#212529]"
       >
-        <ArrowLeft className="h-5 w-5" />
-        <span className="font-medium">Back</span>
+        <ArrowLeft className="h-5 w-5" /> Back to Dashboard
       </button>
 
-      {/* Map Container */}
-      <div className="w-full flex-1 min-h-[600px] bg-white p-2 rounded-3xl shadow-sm border border-gray-100 relative">
-        <div className="w-full h-full rounded-2xl overflow-hidden relative z-0">
-           <Map />
-        </div>
+      <div className="w-full h-full border border-gray-200 rounded-xl overflow-hidden shadow-sm relative z-0">
+        <LeafletMap />
       </div>
     </div>
   );
