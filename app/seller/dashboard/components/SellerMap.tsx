@@ -4,15 +4,29 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "re
 import "leaflet/dist/leaflet.css";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import L from "leaflet";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Geocoder, geocoders } from "leaflet-control-geocoder";
 
-// Fix Icons
+// Fix Icons for Next.js
 const iconRetinaUrl = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png";
 const iconUrl = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png";
 const shadowUrl = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png";
 
-// --- 1. SEARCH BAR COMPONENT ---
+// --- 1. REVERSE GEOCODING HELPER ---
+// Takes Lat/Lng and returns a text address
+const getAddressFromCoordinates = async (lat: number, lng: number) => {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+    const data = await response.json();
+    // Return the formatted address
+    return data.display_name;
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    return null;
+  }
+};
+
+// --- 2. SEARCH BAR COMPONENT ---
 function LeafletControlGeocoder({ onLocationFound }: { onLocationFound: (lat: number, lng: number, name: string) => void }) {
   const map = useMap();
 
@@ -30,11 +44,9 @@ function LeafletControlGeocoder({ onLocationFound }: { onLocationFound: (lat: nu
     })
       .on("markgeocode", function (e: any) {
         const latlng = e.geocode.center;
-        const addressName = e.geocode.name; // <--- This gets the place name
+        const addressName = e.geocode.name; 
         
         map.setView(latlng, 16);
-        
-        // Pass coordinates AND name back to parent
         onLocationFound(latlng.lat, latlng.lng, addressName);
       })
       .addTo(map);
@@ -47,33 +59,70 @@ function LeafletControlGeocoder({ onLocationFound }: { onLocationFound: (lat: nu
   return null;
 }
 
-// --- 2. CLICK MARKER COMPONENT ---
+// --- 3. DRAGGABLE MARKER COMPONENT ---
 function LocationMarker({ 
   position, 
   setPosition, 
+  onLocationUpdate, // New prop to pass data back up
   shopName 
 }: { 
   position: [number, number] | null, 
   setPosition: (pos: [number, number]) => void,
+  onLocationUpdate: (lat: number, lng: number, address: string) => void,
   shopName: string 
 }) {
   const map = useMap();
-  
+  const markerRef = useRef<any>(null);
+
+  // HANDLE DRAG EVENTS
+  const eventHandlers = useMemo(
+    () => ({
+      async dragend() {
+        const marker = markerRef.current;
+        if (marker) {
+          const { lat, lng } = marker.getLatLng();
+          
+          // Update Map Pin Position
+          setPosition([lat, lng]);
+          
+          // Fetch Address & Update Dashboard
+          const address = await getAddressFromCoordinates(lat, lng);
+          if (address) {
+            onLocationUpdate(lat, lng, address);
+          }
+        }
+      },
+    }),
+    [setPosition, onLocationUpdate]
+  );
+
+  // HANDLE CLICK EVENTS
   useMapEvents({
-    click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
+    async click(e) {
+      const { lat, lng } = e.latlng;
+      setPosition([lat, lng]);
       map.flyTo(e.latlng, map.getZoom());
+      
+      // Fetch Address on click too
+      const address = await getAddressFromCoordinates(lat, lng);
+      if (address) {
+        onLocationUpdate(lat, lng, address);
+      }
     },
   });
 
   return position === null ? null : (
-    <Marker position={position}>
-      {/* 3. SHOW SHOP NAME IN POPUP */}
+    <Marker 
+      draggable={true} // ALLOW DRAGGING
+      eventHandlers={eventHandlers} // LISTEN FOR DRAG
+      position={position}
+      ref={markerRef}
+    >
       <Popup>
         <div className="text-center">
            <span className="font-bold">{shopName || "My Shop"}</span>
            <br />
-           <span className="text-xs text-gray-500">Selected Location</span>
+           <span className="text-xs text-gray-500">Drag me to adjust address!</span>
         </div>
       </Popup>
     </Marker>
@@ -98,11 +147,6 @@ export default function SellerMap({
     })();
   }, []);
 
-  const handleSetPosition = (pos: [number, number], addressName?: string) => {
-    setPosition(pos);
-    onLocationSelect(pos[0], pos[1], addressName);
-  };
-
   return (
     <div className="w-full h-[400px] rounded-xl overflow-hidden relative z-0 border border-gray-200">
         <MapContainer 
@@ -116,18 +160,22 @@ export default function SellerMap({
           />
           
           <LeafletControlGeocoder 
-            onLocationFound={(lat, lng, name) => handleSetPosition([lat, lng], name)} 
+            onLocationFound={(lat, lng, name) => {
+              setPosition([lat, lng]);
+              onLocationSelect(lat, lng, name);
+            }} 
           />
           
           <LocationMarker 
             position={position} 
-            setPosition={(pos) => handleSetPosition(pos)} 
+            setPosition={setPosition}
+            onLocationUpdate={onLocationSelect} // Connect marker to dashboard
             shopName={shopName}
           />
         </MapContainer>
         
         <div className="absolute bottom-4 right-4 z-[1000] bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md text-xs font-medium text-gray-600 pointer-events-none">
-            {position ? "Location Pinned!" : "Search or click to pin"}
+            {position ? "Drag pin to adjust address" : "Search or click to pin"}
         </div>
     </div>
   );
