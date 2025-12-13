@@ -5,9 +5,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'oybcpyomhbhqulrzzfg.supabase.co', // Your Supabase project domain
+        // TYPO FIXED BELOW: Added the missing 'h'
+        hostname: 'oybcpyomhbhhqulrzzfg.supabase.co', 
         port: '',
-        pathname: '/storage/v1/object/public/**',    // Path to public storage buckets
+        pathname: '/storage/v1/object/public/**',
       },
     ],
   },
