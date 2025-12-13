@@ -421,12 +421,19 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {favorites.map((fav) => (
                       fav.shops && (
-                      <div key={fav.id} onClick={() => router.push(`/protected/dashboard/Shop?id=${fav.shops.id}`)} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:border-[#88A2FF] transition-colors">
+                      <div 
+                        key={fav.id} 
+                        onClick={() => router.push(`/protected/dashboard/shop?id=${fav.shops.id}`)} 
+                        className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:border-[#88A2FF] transition-colors"
+                      >
+                          {/* Image Container */}
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                              {fav.shops.image_url ? <img src={fav.shops.image_url} className="w-full h-full object-cover" /> : <Store className="h-6 w-6 text-gray-400" />}
                           </div>
-                          <div>
-                             <h4 className="font-bold text-[#212529]">{fav.shops.name}</h4>
+                          
+                          {/* Text Container - ADDED flex-1 and min-w-0 here */}
+                          <div className="flex-1 min-w-0">
+                             <h4 className="font-bold text-[#212529] truncate">{fav.shops.name}</h4>
                              <p className="text-sm text-gray-500 truncate">{fav.shops.address}</p>
                           </div>
                       </div>
